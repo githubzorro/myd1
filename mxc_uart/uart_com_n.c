@@ -31,12 +31,12 @@
 #define MAX_COM_NUM  20
 #define GNR_COM 0
 #define USB_COM 1
-#define COM_TYPE GNR_COM
+#define COM_TYPE USB_COM
 
 #define SEL_FILE_NUM   	2
 #define BUFFER_SIZE	30	
-#define TARGET_COM_PORT	4	/*USB1 - 2*/
-#define RECV_FILE_NAME          "/home/user/recv_file"
+#define TARGET_COM_PORT	2	/*USB1 - 2*/
+#define RECV_FILE_NAME          "/home/hh/recv_file"
 #define TIME_DELAY      100	/*select wait 3 seconds*/
 
 /* The frame format is "start_byte,tx_id(tbd),cmd_len,cmd_id,data, check_sum"*/
@@ -385,7 +385,8 @@ msg_unpack(unsigned char buff[], int *rsp_cmd, unsigned char *errvalue)
 static int msg_pack(unsigned char buff[], int rsp_cmd, int cmd_counter, unsigned char errvalue, int *msg_len)
 {
         	int check_sum, data_len;
-        	int i,j;
+        	int i,j,ret = 0;
+	static int video_num = 5;
 	time_t tv_sec;	/* long */
 		
 	buff[0] = 0xAA;  
@@ -422,7 +423,12 @@ static int msg_pack(unsigned char buff[], int rsp_cmd, int cmd_counter, unsigned
 		{	
 			data_len = 0x1A;
 			tv_sec = time(NULL);
-			strncpy(&buff[4], ctime(&tv_sec), CTIME_SZIE); 
+			strncpy(&buff[4], ctime(&tv_sec), CTIME_SZIE);
+			video_num--;
+			if (video_num>0)
+				ret = 1;
+			else
+				video_num = 5;
 		}
 		break;
 		case 0x3D:
@@ -455,7 +461,7 @@ static int msg_pack(unsigned char buff[], int rsp_cmd, int cmd_counter, unsigned
 	}
 
 	buff[data_len+2] = check_sum;
-	return 0;
+	return ret;
 }
 
 /*======================================
@@ -647,7 +653,9 @@ int main(void)
 		}
 		else{	/*transmit uart data */
 			
-			 msg_pack(snd_buf,rsp_cmd, rsp_counter, errvalue, &write_len);
+			 if (msg_pack(snd_buf,rsp_cmd, rsp_counter, errvalue, &write_len) == 0){
+			 	rcv_trans = 0;
+			 }
 
 			 /*read frame head from serial port*/
 			real_write = write(serial_fd, &snd_buf, write_len);
@@ -659,8 +667,6 @@ int main(void)
 				 printf("error!\n");
 			else
 				rsp_counter ++;
-
-			rcv_trans = 0;
 
 		}
 	}

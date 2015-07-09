@@ -293,7 +293,7 @@ encode(int instns)
 
 	img_size = enc->src_picwidth * enc->src_picheight;
 	fb[src_fbid].myIndex = enc->src_fbid + v4l2_buf.index;
-	fb[src_fbid].bufY = ins_priv[0].cap_buffers[v4l2_buf.index].offset;
+	fb[src_fbid].bufY = ins_priv[instns].cap_buffers[v4l2_buf.index].offset;
 	fb[src_fbid].bufCb = fb[src_fbid].bufY + img_size;
 	fb[src_fbid].bufCr = fb[src_fbid].bufCb + (img_size >> 2);
 	fb[src_fbid].strideY = enc->src_picwidth;
